@@ -76,17 +76,12 @@ public class ECDHUtilityApplication implements CommandLineRunner {
 
 		System.out.println("<<<-----------------Receiving and decoding JWE at Receiver's end ---------------->>>>");
 
-		Security.addProvider(BouncyCastleProviderSingleton.getInstance());
-
-		List<Provider> listProvider = Arrays.asList(Security.getProviders());
-
-		listProvider.stream().forEach(System.out::println);
-
 		System.out.println("Security Provider : "+ Arrays.asList(Security.getProviders()));
 
 		JWEObject jweObjectAtReceiver = JWEObject.parse(serializedJWEToken);
 
-		ECDHDecrypter decrypter = new ECDHDecrypter(ECKey.parse(receiverKeys.toJSONString()));
+		ECDHDecrypter decrypter = new ECDHDecrypter(receiverPrivateKey);
+
 		decrypter.getJCAContext().setProvider(BouncyCastleProviderSingleton.getInstance());
 
 		jweObjectAtReceiver.decrypt(decrypter);
@@ -104,7 +99,8 @@ public class ECDHUtilityApplication implements CommandLineRunner {
 				.expirationTime(new Date(System.currentTimeMillis() + 86400 * 1000 * 2)) //expire after 2 days
 				.build();
 
-		Payload payload = new Payload(claims.toJSONObject());
+		//Payload payload = new Payload(claims.toJSONObject());
+		Payload payload = new Payload("Shahzheeb Khan");
 		System.out.println("Payload :"+payload);
 
 		JWEHeader jweHeader = new JWEHeader(JWEAlgorithm.ECDH_ES, EncryptionMethod.A256GCM);
