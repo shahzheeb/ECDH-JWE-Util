@@ -1,7 +1,9 @@
 package com.shahzheeb.encryption.ECDHUtility;
 
 import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.ECDHDecrypter;
 import com.nimbusds.jose.crypto.ECDHEncrypter;
+import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -12,9 +14,16 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
+import java.security.Provider;
+import java.security.Security;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 
 @SpringBootApplication
 public class ECDHUtilityApplication implements CommandLineRunner {
@@ -59,8 +68,30 @@ public class ECDHUtilityApplication implements CommandLineRunner {
 		System.out.println("Receiver's Secret Key: "+ DatatypeConverter.printHexBinary(receiverSecretKey));
 
 
+		System.out.println("<<<-----------------Create JWE at Sender's end ---------------->>>>");
 		JWEObject jweObject = getJWEToken(senderPublicKey, senderSecretKey);
+		String serializedJWEToken = jweObject.serialize(); // This will be send to the sender.
+		System.out.println("Serialized JWEObject:"+jweObject.serialize());
 
+
+		System.out.println("<<<-----------------Receiving and decoding JWE at Receiver's end ---------------->>>>");
+
+		Security.addProvider(BouncyCastleProviderSingleton.getInstance());
+
+		List<Provider> listProvider = Arrays.asList(Security.getProviders());
+
+		listProvider.stream().forEach(System.out::println);
+
+		System.out.println("Security Provider : "+ Arrays.asList(Security.getProviders()));
+
+		JWEObject jweObjectAtReceiver = JWEObject.parse(serializedJWEToken);
+
+		ECDHDecrypter decrypter = new ECDHDecrypter(ECKey.parse(receiverKeys.toJSONString()));
+		decrypter.getJCAContext().setProvider(BouncyCastleProviderSingleton.getInstance());
+
+		jweObjectAtReceiver.decrypt(decrypter);
+
+		System.out.println(jweObjectAtReceiver.getPayload().toBase64URL().decodeToString());
 
 	}
 
@@ -77,19 +108,16 @@ public class ECDHUtilityApplication implements CommandLineRunner {
 		System.out.println("Payload :"+payload);
 
 		JWEHeader jweHeader = new JWEHeader(JWEAlgorithm.ECDH_ES, EncryptionMethod.A256GCM);
-
 		System.out.println("JWEHeader:"+jweHeader);
 
 		SecretKey secretKey = new SecretKeySpec(secret, 0, secret.length, "AES");
-
-		System.out.println("secretKey:"+DatatypeConverter.printHexBinary(secretKey.getEncoded()));
+		System.out.println("secretKey:"+ DatatypeConverter.printHexBinary(secretKey.getEncoded()));
 
 		ECDHEncrypter encrypter = new ECDHEncrypter(publicKey, secretKey);
 
 		JWEObject jweObject = new JWEObject(jweHeader, payload);
-		jweObject.encrypt(encrypter);
 
-		System.out.println("JWEObject : "+jweObject.toString());
+		jweObject.encrypt(encrypter);
 
 		return jweObject;
 
