@@ -93,11 +93,11 @@ public class ECDHUtilityApplication implements CommandLineRunner {
 
 	private JWEObject getJWEToken(ECPublicKey publicKey, byte[] secret) throws JOSEException{
 
-		JWTClaimsSet claims = new JWTClaimsSet.Builder()
+		/*JWTClaimsSet claims = new JWTClaimsSet.Builder()
 				.claim("creditcardnumber", "3343989033228987")
 				.claim("cvv", "222")
 				.expirationTime(new Date(System.currentTimeMillis() + 86400 * 1000 * 2)) //expire after 2 days
-				.build();
+				.build();*/
 
 		//Payload payload = new Payload(claims.toJSONObject());
 		Payload payload = new Payload("Shahzheeb Khan");
