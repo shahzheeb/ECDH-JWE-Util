@@ -69,7 +69,7 @@ public class ECDHUtilityApplication implements CommandLineRunner {
 
 
 		System.out.println("<<<-----------------Create JWE at Sender's end ---------------->>>>");
-		JWEObject jweObject = getJWEToken(senderPublicKey, senderSecretKey);
+		JWEObject jweObject = getJWEToken(receiverPublicKey, senderSecretKey);
 		String serializedJWEToken = jweObject.serialize(); // This will be send to the sender.
 		System.out.println("Serialized JWEObject:"+jweObject.serialize());
 
